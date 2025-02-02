@@ -1,4 +1,4 @@
-package com.amigoscode.journey;
+package src.test.journey;
 
 import com.amigoscode.customer.Customer;
 import com.amigoscode.customer.CustomerRegistrationRequest;

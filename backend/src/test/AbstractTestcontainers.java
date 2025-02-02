@@ -1,4 +1,4 @@
-package com.amigoscode;
+package src.test;
 
 import com.github.javafaker.Faker;
 import org.flywaydb.core.Flyway;
