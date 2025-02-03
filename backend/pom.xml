@@ -83,21 +83,22 @@
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>1.17.6</version>
+			<artifactId>testcontainers</artifactId>
+			<version>1.19.0</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>testcontainers</artifactId>
-			<version>1.17.6</version>
+			<artifactId>postgresql</artifactId>
+			<version>1.19.0</version>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>1.17.6</version>
+			<artifactId>junit-jupiter</artifactId>
+			<version>1.18.0</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -180,7 +181,7 @@
 						</platforms>
 					</from>
 					<to>
-						<image>docker.io/${organization.name}/${project.artifactId}:${project.version}</image>
+						<image>docker.io/${project.organization.name}/${project.artifactId}:${project.version}</image>
 						<tags>
 							<tag>latest</tag>
 						</tags>
