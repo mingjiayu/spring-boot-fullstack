@@ -1,4 +1,4 @@
-package src.test;
+package com.amigoscode;
 
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;

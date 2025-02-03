@@ -1,4 +1,4 @@
-package src.test.customer;
+package com.amigoscode.customer;
 
 import org.junit.jupiter.api.Test;
 

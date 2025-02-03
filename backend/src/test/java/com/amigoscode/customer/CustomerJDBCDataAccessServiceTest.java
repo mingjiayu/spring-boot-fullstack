@@ -1,6 +1,6 @@
-package src.test.customer;
+package com.amigoscode.customer;
 
-import src.test.AbstractTestcontainers;
+import com.amigoscode.AbstractTestcontainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

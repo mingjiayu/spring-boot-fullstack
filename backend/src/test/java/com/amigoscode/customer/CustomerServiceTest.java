@@ -1,4 +1,4 @@
-package src.test.customer;
+package com.amigoscode.customer;
 
 import com.amigoscode.exception.DuplicateResourceException;
 import com.amigoscode.exception.RequestValidationException;
