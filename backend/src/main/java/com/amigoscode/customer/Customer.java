@@ -17,7 +17,7 @@ public class Customer {
     private String email;
     @Column(nullable = false)
     private Integer age;
-    @Column(nullable = false)
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
 

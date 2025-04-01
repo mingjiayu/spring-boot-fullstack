@@ -1,5 +1,6 @@
 package com.amigoscode.journey;
 
+import com.amigoscode.AbstractTestcontainers;
 import com.amigoscode.customer.Customer;
 import com.amigoscode.customer.CustomerRegistrationRequest;
 import com.amigoscode.customer.CustomerUpdateRequest;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class CustomerIntegrationTest {
+public class CustomerIntegrationTest extends AbstractTestcontainers {
 
     @Autowired
     private WebTestClient webTestClient;

@@ -10,6 +10,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 
@@ -22,20 +24,11 @@ public class Main {
     @Bean
     CommandLineRunner runner(CustomerRepository customerRepository) {
         return args -> {
-            var faker = new Faker();
-            Random random = new Random();
-            Name name = faker.name();
-            String firstName = name.firstName();
-            String lastName = name.lastName();
-            int age = random.nextInt(16, 99);
-            Gender gender = age % 2 == 0 ? Gender.MALE : Gender.FEMALE;
-
-            Customer customer = new Customer(
-                    firstName + " " + lastName,
-                    firstName.toLowerCase() + '.' + lastName.toLowerCase() + "@amigoscode.com",
-                    age,
-                    gender);
-            customerRepository.save(customer);
+            Faker faker=new Faker();
+            Customer customer= new Customer(faker.name().fullName(),faker.internet().emailAddress(),faker.number().numberBetween(18, 90), Gender.MALE);
+            List<Customer> customerList= new ArrayList<>();
+            customerList.add(customer);
+            customerRepository.saveAll(customerList);
         };
     }
 }
