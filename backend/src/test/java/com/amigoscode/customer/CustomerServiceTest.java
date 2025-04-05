@@ -25,10 +25,11 @@ class CustomerServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     private CustomerService underTest; // Service being tested
+    private final CustomerDTOMapper customerDTOMapper = new CustomerDTOMapper();
 
     @BeforeEach
     void setUp() {
-        underTest = new CustomerService(customerDao, passwordEncoder); // Injects mock into service
+        underTest = new CustomerService(customerDao, customerDTOMapper, passwordEncoder); // Injects mock into service
     }
 
     @Test
@@ -58,12 +59,14 @@ class CustomerServiceTest {
         //  - "Instead, just return this Optional containing this specific customer"
         when(customerDao.selectCustomerById(id)).thenReturn(Optional.of(customer));
 
+        CustomerDTO expected = customerDTOMapper.apply(customer);
+
         // When
         // below will evoke: customerDao.selectCustomerById(10) which will return the Optional<Customer> we specified
-        Customer actual = underTest.getCustomer(id);
+        CustomerDTO actual = underTest.getCustomer(id);
 
         // Then
-        assertThat(actual).isEqualTo(customer);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test

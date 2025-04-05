@@ -20,13 +20,13 @@ public class CustomerController {
 
     @GetMapping
     // is equivalent to @RequestMapping(path = "api/v1/customer", method = RequestMethod.GET)
-    public List<Customer> getCustomers() {
+    public List<CustomerDTO> getCustomers() {
         return customerService.getAllCustomers();
     }
 
     @GetMapping("{customerId}")
     // "api/v1/customer/{customerId}/cars/carId"
-    public Customer getCustomer(@PathVariable("customerId") Integer customerId) {
+    public CustomerDTO getCustomer(@PathVariable("customerId") Integer customerId) {
         return customerService.getCustomer(customerId);
     }
 
