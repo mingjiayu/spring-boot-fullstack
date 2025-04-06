@@ -1,16 +1,14 @@
 package com.amigoscode.journey;
 
 import com.amigoscode.AbstractTestcontainers;
-import com.amigoscode.customer.Customer;
-import com.amigoscode.customer.CustomerRegistrationRequest;
-import com.amigoscode.customer.CustomerUpdateRequest;
-import com.amigoscode.customer.Gender;
+import com.amigoscode.customer.*;
 import com.github.javafaker.Faker;
 import com.github.javafaker.Name;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -21,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CustomerIntegrationTest extends AbstractTestcontainers {
@@ -45,7 +44,7 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
                 name, email, "password", age, gender
         );
         // send a post request to our apis
-        webTestClient.post()
+        String jwtToken = webTestClient.post()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -53,44 +52,54 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
                 .exchange()// executes the HTTP request that was built up (in this case, a POST request)
                 // and returns a response entity that can be used for assertions.
                 .expectStatus()// starts the validation of the HTTP status code of the response.
-                .isOk(); // checks if the HTTP status code is 200 OK
+                .isOk() // checks if the HTTP status code is 200 OK
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(AUTHORIZATION)
+                .get(0);
         // get all customers
-        List<Customer> allCustomers = webTestClient.get()
+        List<CustomerDTO> allCustomers = webTestClient.get()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBodyList(new ParameterizedTypeReference<Customer>() {
+                .expectBodyList(new ParameterizedTypeReference<CustomerDTO>() {
                 })//deserialize the response body into a List of the specified type.
                 .returnResult()//Gets the complete test result including the deserialized body
                 .getResponseBody();//Extracts the actual List<Customer> from the test result
 
-        // make sure that customer is present
-        Customer expectedCustomer = new Customer(
-                name, email, "password", age,
-                gender);
 
-        assertThat(allCustomers)
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id")
-                .contains(expectedCustomer);
+
 
         // get customer by id
         var id = allCustomers.stream()
-                .filter(customer -> customer.getEmail().equals(email))
-                .map(Customer::getId)
+                .filter(customer -> customer.email().equals(email))
+                .map(CustomerDTO::id)
                 .findFirst()
                 .orElseThrow();
 
-        expectedCustomer.setId(id);
+        CustomerDTO expectedCustomer = new CustomerDTO(
+                id,
+                name,
+                email,
+                gender,
+                age,
+                List.of("ROLE_USER"),
+                email
+        );
+
+        assertThat(allCustomers).contains(expectedCustomer);
 
         webTestClient.get()
                 .uri(CUSTOMER_URI + "/{id}", id)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(new ParameterizedTypeReference<Customer>() {
+                .expectBody(new ParameterizedTypeReference<CustomerDTO>() {
                 })
                 .isEqualTo(expectedCustomer);
     }
@@ -109,7 +118,12 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
         CustomerRegistrationRequest request = new CustomerRegistrationRequest(
                 name, email, "password", age, gender
         );
-        // send a post request to our apis
+
+        CustomerRegistrationRequest request2 = new CustomerRegistrationRequest(
+                name, email + ".uk", "password", age, gender
+        );
+
+        // send a post request to create customer 1
         webTestClient.post()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
@@ -119,14 +133,31 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
                 // and returns a response entity that can be used for assertions.
                 .expectStatus()// starts the validation of the HTTP status code of the response.
                 .isOk(); // checks if the HTTP status code is 200 OK
-        // get all customers
-        List<Customer> allCustomers = webTestClient.get()
+
+
+        // send a post request to create customer 2
+        String jwtToken = webTestClient.post()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(request2), CustomerRegistrationRequest.class)
+                .exchange()// executes the HTTP request that was built up (in this case, a POST request)
+                // and returns a response entity that can be used for assertions.
+                .expectStatus()// starts the validation of the HTTP status code of the response.
+                .isOk() // checks if the HTTP status code is 200 OK
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(AUTHORIZATION)
+                .get(0);
+        // get all customers
+        List<CustomerDTO> allCustomers = webTestClient.get()
+                .uri(CUSTOMER_URI)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBodyList(new ParameterizedTypeReference<Customer>() {
+                .expectBodyList(new ParameterizedTypeReference<CustomerDTO>() {
                 })//deserialize the response body into a List of the specified type.
                 .returnResult()//Gets the complete test result including the deserialized body
                 .getResponseBody();//Extracts the actual List<Customer> from the test result
@@ -134,21 +165,25 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
 
         // delete and then try to get customer
         var id = allCustomers.stream()
-                .filter(customer -> customer.getEmail().equals(email))
-                .map(Customer::getId)
+                .filter(customer -> customer.email().equals(email))
+                .map(CustomerDTO::id)
                 .findFirst()
                 .orElseThrow();
 
+        // customer2 delete customer1
         webTestClient.delete()
                 .uri(CUSTOMER_URI + "/{id}", id)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
                 .isOk();
 
+        //customer2 gets customer1 by id
         webTestClient.get()
                 .uri(CUSTOMER_URI + "/{id}", id)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isNotFound();
@@ -169,7 +204,7 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
                 name, email, "password", age, gender
         );
         // send a post request to our apis
-        webTestClient.post()
+        String jwtToken = webTestClient.post()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -177,15 +212,21 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
                 .exchange()// executes the HTTP request that was built up (in this case, a POST request)
                 // and returns a response entity that can be used for assertions.
                 .expectStatus()// starts the validation of the HTTP status code of the response.
-                .isOk(); // checks if the HTTP status code is 200 OK
+                .isOk() // checks if the HTTP status code is 200 OK
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(AUTHORIZATION)
+                .get(0);
+
         // get all customers
-        List<Customer> allCustomers = webTestClient.get()
+        List<CustomerDTO> allCustomers = webTestClient.get()
                 .uri(CUSTOMER_URI)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBodyList(new ParameterizedTypeReference<Customer>() {
+                .expectBodyList(new ParameterizedTypeReference<CustomerDTO>() {
                 })//deserialize the response body into a List of the specified type.
                 .returnResult()//Gets the complete test result including the deserialized body
                 .getResponseBody();//Extracts the actual List<Customer> from the test result
@@ -193,8 +234,8 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
 
         // update and then try to get customer
         var id = allCustomers.stream()
-                .filter(customer -> customer.getEmail().equals(email))
-                .map(Customer::getId)
+                .filter(customer -> customer.email().equals(email))
+                .map(CustomerDTO::id)
                 .findFirst()
                 .orElseThrow();
 
@@ -207,25 +248,26 @@ public class CustomerIntegrationTest extends AbstractTestcontainers {
         webTestClient.put()
                 .uri(CUSTOMER_URI + "/{id}", id)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(updateRequest), CustomerUpdateRequest.class)
                 .exchange()
                 .expectStatus()
                 .isOk();
 
-        Customer updatedCustomer = webTestClient.get()
+        CustomerDTO updatedCustomer = webTestClient.get()
                 .uri(CUSTOMER_URI + "/{id}", id)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, String.format("Bearer %s", jwtToken))
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(Customer.class)
+                .expectBody(CustomerDTO.class)
                 .returnResult()
                 .getResponseBody();
 
-        Customer expected = new Customer(
-                id, newName, email, "password", age,
-                gender);
+        CustomerDTO expected = new CustomerDTO(
+                id, newName, email,  gender, age, List.of("ROLE_USER"), email);
 
         assertThat(updatedCustomer).isEqualTo(expected);
 
