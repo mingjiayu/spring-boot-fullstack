@@ -22,8 +22,8 @@ import {
 } from "@chakra-ui/react";
 
 import { useRef } from "react";
-import { deleteCustomer } from "../services/client";
-import { successNotification } from "../services/notification";
+import { deleteCustomer } from "../../services/client";
+import { successNotification } from "../../services/notification";
 import UpdateCustomerDrawer from "./UpdateCustomerDrawer";
 
 export default function CardWithImage({
