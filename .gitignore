@@ -64,3 +64,6 @@ dist-ssr
 *.sln
 *.sw?
 
+
+*.mp4
+
