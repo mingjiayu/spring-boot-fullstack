@@ -14,7 +14,7 @@ import {
   Alert,
   AlertIcon,
 } from "@chakra-ui/react";
-import loginImage from "../../images/login.jpg";
+
 import * as Yup from "yup";
 import { Formik, Form, useField } from "formik";
 import { useAuth } from "../context/AuthContext";
@@ -27,10 +27,14 @@ const MyTextInput = ({ label, ...props }) => {
   return (
     <Box>
       <FormLabel htmlFor={props.id || props.name}>{label}</FormLabel>
-      <Input className="text-input" {...field} {...props} />
+      <Input 
+        id={props.id || props.name}  // Add this line to ensure id matches
+        className="text-input" 
+        {...field} 
+        {...props} 
+      />
       {meta.touched && meta.error ? (
         <Alert className="error" status={"error"} mt={2}>
-          {" "}
           <AlertIcon /> {meta.error}
         </Alert>
       ) : null}
@@ -117,23 +121,48 @@ const Login = () => {
             Sign in to your account
           </Heading>
           <LoginForm />
+          <Link color={"blue.500"} href={"/signup"}>
+            Don't have an account? Sign up now.
+          </Link>
         </Stack>
       </Flex>
-      <Flex
-        flex={1}
-        p={10}
-        flexDirection={"column"}
-        align={"center"}
-        justifyItems={"center"}
-        bgGradient={{ sm: "linear(to-r, blue.600, purple.600)" }}
+      
+      {/* Video Side */}
+      <Box 
+        flex={1} 
+        bg="black" 
+        position="relative"
+        display={{ base: "none", md: "block" }}
       >
-        <Text fontSize={"6xl"} color={"white"} fontWeight={"bold"} mb={5}>
-          <Link href={"https://www.linkedin.com/in/mingjiayu/"} isExternal>
-            LinkedIn
-          </Link>
-        </Text>
-        <Image alt={"Login Image"} objectFit={"scale-down"} src={loginImage} />
-      </Flex>
+        <Box
+          as="video"
+          position="absolute"
+          top="0"
+          left="0"
+          width="100%"
+          height="100%"
+          objectFit="cover"
+          src="/background.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        
+        <Flex
+          position="absolute"
+          bottom="5%"
+          width="100%"
+          justifyContent="center"
+          zIndex={1}
+        >
+          <Text fontSize="6xl" color="white" fontWeight="bold" textShadow="1px 1px 3px rgba(0,0,0,0.6)">
+            <Link href="https://www.linkedin.com/in/mingjiayu/" isExternal>
+              LinkedIn
+            </Link>
+          </Text>
+        </Flex>
+      </Box>
     </Stack>
   );
 };
